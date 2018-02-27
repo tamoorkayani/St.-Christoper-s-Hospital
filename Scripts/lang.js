@@ -205,8 +205,10 @@ ShowTime();
           });
        function ShowTime()  
         {  
-            var dt = new Date();  
+            var dt = new Date();
+            var localeSpecificTime = dt.toLocaleTimeString();
+            localeSpecificTime=localeSpecificTime.replace(/:\d+ /, ' ');  
             document.getElementById("date_time")  
-                .innerHTML = dt.toLocaleTimeString();  
+                .innerHTML = localeSpecificTime;//dt.toLocaleTimeString();  
             window.setTimeout("ShowTime()", 1000); // Here 1000(milliseconds) means one 1 Sec  
         }
