@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content="text/html" charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=10" />
+
+
+<!--<script language="JavaScript" type="text/javascript"
+  src="Scripts/FlashPlayer.js"></script>-->
+<script language="JavaScript" type="text/javascript"
+  src="../../Scripts/BaseCommand.js"></script>
+<script language="JavaScript" type="text/javascript"
+  src="../../Scripts/BaseEvent.js"></script>
+<script language="JavaScript" type="text/javascript"
+  src="../../Scripts/LogConsole.js"></script>
+
+
+<script language="JavaScript" type="text/javascript"
+  src="../../maincontents.js"></script>
+ <script src="../../jquery/jquery-3.2.1.min.js"></script>
+ <script src="../../boots/js/bootstrap.min.js"></script>
+  <script src="../../Scripts/speech.js"></script>
+
+  <script src="../../Scripts/lang.js"></script>
+  <link rel="stylesheet" href="../../boots/css/bootstrap.min.css">
+
+  <link rel="stylesheet" href="../../css/style_riyadh.css">
+
+<style>
+  
+   .bmg
+    {
+        background-image: none;
+    }
+    .img-home {
+          position: relative;
+          z-index: 99;
+          margin-top: -32px;
+          margin-left: 96px;
+          height: 66px;
+          cursor: pointer; cursor: hand;
+    }
+     .FArr{
+        margin-top:20px;
+        margin-right:20px;
+        margin-left:20px;
+      }
+
+    
+tbody {
+    display:block;
+    height:1000px;
+    overflow:auto;
+}
+thead, tbody tr {
+    display:table;
+    width:100%;
+    table-layout:fixed;
+}
+thead {
+    width: calc( 101.5% - 1em )
+}
+
+
+</style>
+
+
+
+<link href="../../css/Setting.css" rel="stylesheet" type="text/css" />
+<link href="../../css/Language.css" rel="stylesheet" type="text/css" />
+<link href="../../css/Main.css" rel="stylesheet" type="text/css" />
+
+<script language="JavaScript" type="text/javascript" src="../../Scripts/FlashPlayer.js"></script>
+<script language="JavaScript" type="text/javascript" src="RobotDance.js"></script>
+  <script type="text/javascript">
+
+      function Setting() {
+          location.href = "../../Config/Config.htm";
+        }
+
+  </script>
+
+  <script>
+      $(document).ready(function(){
+
+        var today = new Date();
+        var date = today.getFullYear()+'/'+(today.getMonth()+1)+'/'+today.getDate();
+//        var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+        var time = today.getHours()
+        // var url = "https://api.flightstats.com/flex/flightstatus/"+date+"/"+time;
+        // console.log(url);  
+
+        var url = "https://api.flightstats.com/flex/flightstatus/rest/v2/jsonp/airport/status/RUH/dep/"+date+"/"+time+"?appId=f8a8a638&appKey=f6fc472c1ce879d669ec26f48888450b&utc=false&numHours=1&maxFlights=10&callback=?";
+//        console.log(url);
+//curl -v  -X GET "https://api.flightstats.com/flex/flightstatus/rest/v2/json/airport/status/RUH/dep/2017/08/30/17?appId=f8a8a638&appKey=f6fc472c1ce879d669ec26f48888450b&utc=false&numHours=1&maxFlights=5"
+
+
+        $.ajax({
+              type: "GET",
+
+            // url: "https://api.flightstats.com/flex/flightstatus/rest/v2/jsonp/airport/status/RUH/arr/2017/8/19/18?appId=f8a8a638&appKey=f6fc472c1ce879d669ec26f48888450b&utc=false&numHours=1&maxFlights=5&callback=?",
+            url:url,
+            dataType: "JSONP",
+            success: function(data) {
+              console.log(data);
+             
+
+              var airport = "King Khaled International Airport(RUH)";
+               var finalF = data.flightStatuses;
+
+               finalF = finalF.sort(function(a,b){
+                //sorting based on arrival time
+                var a1 = a.arrivalDate.dateLocal, b1=b.arrivalDate.dateLocal;
+                if(a1==b1) return 0;
+                return a1>b1?1:-1;
+
+               });
+
+               console.log(finalF);
+
+               //var finalF= flights.slice(1,5);
+               // jQuery.each(finalF,function(index,item){
+                for(i=0;i<finalF.length;i++)
+                {
+//                console.log(finalF);
+//                console.log(finalF[0].departureAirportFsCode);
+
+                var origin = finalF[i].arrivalAirportFsCode;
+                var airline = finalF[i].carrierFsCode;
+                var flight = finalF[i].flightNumber;
+                var arrival = finalF[i].departureDate.dateLocal;
+                
+
+                var terminal;
+                if("airportResources" in finalF[i])
+                { 
+                  if("departureTerminal" in finalF[i].airportResources)
+                  {
+                    terminal = finalF[i].airportResources.departureTerminal;
+                    var dep_gate = finalF[i].airportResources.departureGate;
+
+                    if(dep_gate){dep_gate = "- "+dep_gate;}
+                    else {dep_gate = "- ON GATE";}
+                  }
+                }
+                // console.log(finalF[i].delays);
+
+                var dep_time, sch_dep_time,delay;
+                if(("departureDate" in finalF[i]) && ("operationalTimes" in finalF[i]))
+                  { 
+                    dep_time = finalF[i].departureDate.dateLocal;
+                    sch_dep_time = finalF[i].operationalTimes.scheduledGateDeparture;
+
+                    if(dep_time==sch_dep_time){delay=0;}
+                    if(dep_time>sch_dep_time){delay=true;}
+                  }
+                else
+                  {delay=0}
+
+
+                var status, flight_status;
+                flight_status = finalF[i].status;
+
+                if(flight_status=="S"){flight_status="Scheduled";}
+                if(flight_status=="A"){flight_status="Active";}
+                if(flight_status=="U"){flight_status="Unknown";}
+                if(flight_status=="R"){flight_status="Redirected";}
+                if(flight_status=="L"){flight_status="Landed";}
+                if(flight_status=="D"){flight_status="Diverted";}
+                if(flight_status=="C"){flight_status="Cancelled";}
+                if(flight_status=="NO"){flight_status="Not Operational";}
+                // var status = finalF[i].delayMinutes;
+                  
+                //Date and Time conversion
+                var arrTime = arrival.substring(11,16);
+                  var H = +arrTime.substr(0, 2);
+                arrTime = H + arrTime.substr(2,3);
+                
+                // if(delay>60){delay/=60;}
+
+                if(delay){status= "DELAYED";}
+                else {status="ON TIME";}
+                //console.log(status);
+
+                $('.row'+i).html(airline+" "+ flight);
+                $('.origin'+i).html(origin);
+                $('.airline'+i).html(airline);
+
+                  
+                
+                $('.flight'+i).html(terminal + dep_gate);
+                $('.arrival'+i).html(arrTime);
+                $('.status'+i).html(flight_status+"- "+ status);
+                var dir;
+                dir = '../../images/airlines/'+airline+'.jpg';
+                                // console.log(dir);
+                //var ar_code = dir.substring(22,25);
+
+
+
+
+                $('#img'+i).attr('src',dir);
+
+               
+               }
+          
+
+              // $(".conditions").html(airport+"<br>"+"Upcoming flight Arrivals:"+"<br>");
+
+
+            },
+        
+          });
+      });
+    </script>
+
+
+</head>
+<body>
+<!-- <h1>नमस्ते</h1> -->
+    <div class="jumbotron text-center">
+      <p id="currentDate"></p><br>
+      <span class="col-sm-6">
+         <img src="../../images/logo_riyad_mod.png" class="img-responsive" alt="Responsive image">
+       <!-- <p id="content_term"> محطة A</p> -->
+      </span>
+      <span class="col-sm-6">
+          <img src="../../images/Home-icon.png" onclick="GoHome()" class="img-home" alt="Responsive image">
+
+         <!--  <p  id="content_air">مطار الملك خالد الدولي</p> -->
+      </span>
+      
+       
+    </div>
+
+    <nav class="navbar navbar-default">
+      <div class="container-fluid navbar1">
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+          <ul class="nav navbar-nav">
+            <li class="vdivider active">
+              <a href="#" >
+                  <span class="glyphicon glyphicon-plane" ></span>
+                  <div id="glyph-text">Flights</div>
+                   <span class="sr-only">(current)</span>
+              </a>
+            </li>
+            <li class="vdivider">
+            <a href="#">
+              <span class="glyphicon glyphicon-qrcode" id="glyph-text"></span>
+              <div id="glyph-text">Scan your Boarding-pass</div>
+
+            </a>
+            </li>
+            
+            <li class="vdivider">
+              <a href="#">
+                <span class="glyphicon glyphicon-picture" id="glyph-text"></span><div id="glyph-text">Terminal Map</div>
+              </a>
+            </li>
+            <li class="dropdown vdivider">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+              <span class="glyphicon glyphicon-pushpin" id="glyph-text"></span>              <div id="glyph-text">Change Language<span class="caret"></span></div>
+
+               </a>
+              <ul class="dropdown-menu">
+                <li class = "active">
+                  <a id="change-ar" href = "#">
+                    <img class="flag" src="../../images/flags/arabia.png">
+                  </a>
+                </li>
+                <li id="change-us" value="de"><a href="#"><img class="flag" src="../../images/flags/us.png"></a></li>
+              </ul>
+            </li>
+            <li class="vdivider"></li>
+          </ul>
+        </div><!-- /.navbar-collapse -->
+      </div><!-- /.container-fluid -->
+    </nav>
+
+  <div class="bmg">  
+    <div class="icon1">
+      <div class="container">
+        <ul class="nav nav-tabs">
+          <li role="presentation"><a href="index.htm">Arrivals</a></li>
+          <li role="presentation" class="active"><a href="flights_dep.htm">Departures</a></li>
+        </ul>
+        
+        <div class= "fArr">
+          <table class="table table-striped">
+            <thead>
+              <tr class="bg-primary">
+                <th>Flight</th>
+                <th>Origin</th>
+                <th>Airline</th>
+                <th>Terminal</th>
+                  <th>Arrival</th>
+                <th>Status(min)</th>
+
+              </tr>
+            </thead>
+            <tbody >
+              <tr>
+                <th class="row0"></th>
+                <td class="origin0"></td>
+               <!--  <td class="airline0"></td> -->
+                <td>  <img class="img-circle" src="" id="img0" width="100" height="100">
+                </td>
+
+                <td class="flight0"></td>
+                  <td class="arrival0"></td>
+                <td class="status0"></td>
+              </tr>
+
+              <tr>
+                <th class="row1"></th>
+                <td class="origin1"></td>
+                <!-- <td class="airline1"></td> -->
+                <td>  <img class="img-circle" src="" id="img1" width="100" height="100">
+                </td>
+                <td class="flight1"></td>
+                  <td class="arrival1"></td>
+                <td class="status1"></td>
+              </tr>
+              <tr>
+                <th class="row2"></th>
+                <td class="origin2"></td>
+                <!-- <td class="airline2"></td> -->
+                <td>  <img class="img-circle" src="" id="img2" width="100" height="100">
+                </td>
+                <td class="flight2"></td>
+                  <td class="arrival2"></td>
+                <td class="status2"></td>
+              </tr>
+              <tr>
+                <th class="row3"></th>
+                <td class="origin3"></td>
+                <!-- <td class="airline3"></td> -->
+                <td>  <img class="img-circle" src="" id="img3" width="100" height="100">
+                </td>
+                <td class="flight3"></td>
+                  <td class="arrival3"></td>
+                <td class="status3"></td>
+              </tr>
+              <tr>
+                <th class="row4"></th>
+                <td class="origin4"></td>
+                <!-- <td class="airline4"></td> -->
+                <td>  <img class="img-circle" src="" id="img4" width="100" height="100">
+                </td>
+                <td class="flight4"></td>
+                  <td class="arrival4"></td>
+                <td class="status4"></td>
+              </tr>
+              <tr>
+                <th class="row5"></th>
+                <td class="origin5"></td>
+                <!-- <td class="airline5"></td> -->
+                <td>  <img class="img-circle" src="" id="img5" width="100" height="100">
+                </td>
+                <td class="flight5"></td>
+                  <td class="arrival5"></td>
+                <td class="status5"></td>
+              </tr>
+
+              <tr>
+                <th class="row6"></th>
+                <td class="origin6"></td>
+                <!-- <td class="airline6"></td> -->
+                <td> 
+                 <img class="img-circle" src="" id="img6" width="100" height="100">
+                </td>
+                <td class="flight6"></td>
+                  <td class="arrival6"></td>
+                <td class="status6"></td>
+              </tr>
+
+              <tr>
+                <th class="row7"></th>
+                <td class="origin7"></td>
+                <!-- <td class="airline7"></td> -->
+                <td>  <img class="img-circle" src="" id="img7" width="100" height="100">
+                </td>
+                <td class="flight7"></td>
+                  <td class="arrival7"></td>
+                <td class="status7"></td>
+              </tr>
+              <tr>
+                <th class="row8"></th>
+                <td class="origin8"></td>
+                <!-- <td class="airline8"></td> -->
+                <td>  <img class="img-circle" src="" id="img8" width="100" height="100">
+                </td>
+                <td class="flight8"></td>
+                  <td class="arrival8"></td>
+                <td class="status8"></td>
+              </tr>
+              <tr>
+                <th class="row9"></th>
+                <td class="origin9"></td>
+                <!-- <td class="airline9"></td> -->
+                <td>  <img class="img-circle" src="" id="img9" width="100" height="100">
+                </td>
+                <td class="flight9"></td>
+                  <td class="arrival9"></td>
+                <td class="status9"></td>
+              </tr>
+
+
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <footer>
+    <div id="myCarousel" class="carousel slide" data-ride="carousel">
+        <ol class="carousel-indicators">
+          <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+          <li data-target="#myCarousel" data-slide-to="1"></li>
+          <li data-target="#myCarousel" data-slide-to="2"></li>
+          <li data-target="#myCarousel" data-slide-to="3"></li>
+          <li data-target="#myCarousel" data-slide-to="4"></li>
+        </ol>
+
+        <div class="carousel-inner" role="listbox">
+
+          <div class="item active">
+            <img class="fixed-height" src="../../images/1.png" width="460" height="345">
+            <div class="carousel-caption">
+              <h3></h3>
+              <p></p>
+            </div>
+          </div>
+
+          <div class="item">
+            <img class="fixed-height" src="../../images/2.png" width="460" height="345">
+            <div class="carousel-caption">
+              <h3></h3>
+              <p></p>
+            </div>
+          </div>
+        
+          <div class="item">
+            <img class="fixed-height" src="../../images/3.png" width="460" height="345">
+            <div class="carousel-caption">
+              <h3></h3>
+              <p></p>
+            </div>
+          </div>
+
+    
+          
+          <div class="item">
+            <img class="fixed-height" src="../../images/5.png" width="460" height="345">
+            <div class="carousel-caption">
+              <h3></h3>
+              <p></p>
+            </div>
+          </div>
+
+          <div class="item">
+            <img class="fixed-height" src="../../images/6.png" width="460" height="345">
+            <div class="carousel-caption">
+              <h3></h3>
+              <p></p>
+            </div>
+          </div>
+
+        </div>
+
+        <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
+          <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+          <span class="sr-only">Previous</span>
+        </a>
+        <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
+          <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+          <span class="sr-only">Next</span>
+        </a>
+    </div>
+  </footer>
+
+</body>
+</html>
